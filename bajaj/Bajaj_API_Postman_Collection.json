@@ -1,0 +1,67 @@
+{
+    "info": {
+        "name": "Bajaj Webhook API",
+        "description": "Postman Collection to connect to the Bajaj API instead of posting via the script directly.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "1. Generate Webhook",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"name\": \"Aditya Yogi\",\n    \"regNo\": \"0827rl231005\",\n    \"email\": \"adityayogi230523@acropolis.in\"\n}"
+                },
+                "url": {
+                    "raw": "https://bfhldevapigw.healthrx.co.in/hiring/generateWebhook/PYTHON",
+                    "protocol": "https",
+                    "host": [
+                        "bfhldevapigw",
+                        "healthrx",
+                        "co",
+                        "in"
+                    ],
+                    "path": [
+                        "hiring",
+                        "generateWebhook",
+                        "PYTHON"
+                    ]
+                }
+            }
+        },
+        {
+            "name": "2. Submit SQL Query",
+            "request": {
+                "method": "POST",
+                "header": [
+                    {
+                        "key": "Content-Type",
+                        "value": "application/json"
+                    },
+                    {
+                        "key": "Authorization",
+                        "value": "{{accessToken}}",
+                        "description": "Replace {{accessToken}} with the token received from the previous request."
+                    }
+                ],
+                "body": {
+                    "mode": "raw",
+                    "raw": "{\n    \"finalQuery\": \"SELECT p.AMOUNT AS SALARY, CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME, TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS AGE, d.DEPARTMENT_NAME FROM PAYMENTS p JOIN EMPLOYEE e ON p.EMP_ID = e.EMP_ID JOIN DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID WHERE DAY(p.PAYMENT_TIME) <> 1 ORDER BY p.AMOUNT DESC LIMIT 1;\"\n}"
+                },
+                "url": {
+                    "raw": "{{webhook_url}}",
+                    "host": [
+                        "{{webhook_url}}"
+                    ]
+                }
+            }
+        }
+    ]
+}

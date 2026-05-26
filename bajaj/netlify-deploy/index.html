@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bajaj API Connector</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #0f172a; color: #f8fafc; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .container { background-color: #1e293b; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); width: 100%; max-width: 500px; }
+        h1 { font-size: 1.5rem; margin-bottom: 1.5rem; text-align: center; color: #38bdf8; }
+        .form-group { margin-bottom: 1rem; }
+        label { display: block; margin-bottom: 0.5rem; font-size: 0.875rem; color: #94a3b8; }
+        input[type="text"], input[type="email"], textarea { width: 100%; padding: 0.75rem; border-radius: 6px; border: 1px solid #334155; background-color: #0f172a; color: #f8fafc; box-sizing: border-box; font-family: inherit; }
+        textarea { resize: vertical; min-height: 100px; }
+        button { background-color: #38bdf8; color: #0f172a; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; transition: background-color 0.2s; }
+        button:hover { background-color: #0ea5e9; }
+        button:disabled { background-color: #475569; cursor: not-allowed; }
+        .result { margin-top: 1.5rem; padding: 1rem; border-radius: 6px; background-color: #0f172a; border: 1px solid #334155; font-size: 0.875rem; white-space: pre-wrap; word-break: break-all; display: none; }
+        .success { border-color: #10b981; color: #10b981; }
+        .error { border-color: #ef4444; color: #ef4444; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Bajaj API Connector</h1>
+        <div class="form-group">
+            <label for="name">Name</label>
+            <input type="text" id="name" value="Aditya Yogi">
+        </div>
+        <div class="form-group">
+            <label for="regNo">Registration Number</label>
+            <input type="text" id="regNo" value="0827rl231005">
+        </div>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" value="adityayogi230523@acropolis.in">
+        </div>
+        <div class="form-group">
+            <label for="query">SQL Query</label>
+            <textarea id="query">SELECT p.AMOUNT AS SALARY, CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME, TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS AGE, d.DEPARTMENT_NAME FROM PAYMENTS p JOIN EMPLOYEE e ON p.EMP_ID = e.EMP_ID JOIN DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID WHERE DAY(p.PAYMENT_TIME) <> 1 ORDER BY p.AMOUNT DESC LIMIT 1;</textarea>
+        </div>
+        <button id="submitBtn">Connect API & Submit</button>
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('submitBtn').addEventListener('click', async () => {
+            const btn = document.getElementById('submitBtn');
+            const resultDiv = document.getElementById('result');
+            
+            const name = document.getElementById('name').value;
+            const regNo = document.getElementById('regNo').value;
+            const email = document.getElementById('email').value;
+            const query = document.getElementById('query').value;
+            
+            btn.disabled = true;
+            btn.textContent = 'Processing...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result';
+            resultDiv.textContent = 'Generating webhook...';
+            
+            try {
+                // Step 1: Generate Webhook using Netlify Proxy to bypass CORS
+                const genRes = await fetch('/api/hiring/generateWebhook/PYTHON', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, regNo, email })
+                });
+                
+                if (!genRes.ok) throw new Error(`Webhook generation failed: ${genRes.statusText}`);
+                
+                const apiData = await genRes.json();
+                const webhookUrl = apiData.webhook;
+                const accessToken = apiData.accessToken;
+                
+                resultDiv.textContent = `Webhook Generated.\nURL: ${webhookUrl}\n\nSubmitting SQL Query...`;
+                
+                // Proxy the webhook URL as well if it belongs to the same domain
+                let proxyWebhookUrl = webhookUrl;
+                if (webhookUrl && webhookUrl.startsWith('https://bfhldevapigw.healthrx.co.in/')) {
+                    proxyWebhookUrl = webhookUrl.replace('https://bfhldevapigw.healthrx.co.in/', '/api/');
+                }
+                
+                // Step 2: Submit Query
+                const submitRes = await fetch(proxyWebhookUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': accessToken,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ finalQuery: query.trim() })
+                });
+                
+                if (!submitRes.ok) throw new Error(`Query submission failed: ${submitRes.statusText}`);
+                
+                const submitText = await submitRes.text();
+                
+                resultDiv.className = 'result success';
+                resultDiv.textContent = `Success!\n\nResponse:\n${submitText}`;
+                
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.textContent = `Error:\n${error.message}\n\n(If you are running this locally via file://, CORS will block it. Please test on the deployed Netlify URL!)`;
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Connect API & Submit';
+            }
+        });
+    </script>
+</body>
+</html>
