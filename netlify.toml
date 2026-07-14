@@ -1,0 +1,9 @@
+[build]
+  publish = "project/src"
+  command = "echo 'No build required'"
+
+[[redirects]]
+  from = "/api/*"
+  to = "https://bfhldevapigw.healthrx.co.in/:splat"
+  status = 200
+  force = true

@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SQL Challenge Submission</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        .success {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #c3e6cb;
+        }
+
+        .error {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+        }
+
+        pre {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #e9ecef;
+            overflow-x: auto;
+        }
+
+        .card {
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+
+<body>
+    <h1>SQL Challenge Submission</h1>
+
+    <div class="card">
+        <h2>Solution SQL Query</h2>
+        <pre><code>SELECT 
+    p.AMOUNT AS SALARY,
+    CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME,
+    TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS AGE,
+    d.DEPARTMENT_NAME
+FROM 
+    PAYMENTS p
+JOIN 
+    EMPLOYEE e ON p.EMP_ID = e.EMP_ID
+JOIN 
+    DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID
+WHERE 
+    DAY(p.PAYMENT_TIME) != 1
+ORDER BY 
+    p.AMOUNT DESC
+LIMIT 1;</code></pre>
+    </div>
+
+    <div class="card">
+        <h2>API Submission Results</h2>
+        <div id="results">
+            <p>Loading results...</p>
+        </div>
+    </div>
+
+    <script>
+        fetch('result.json')
+            .then(response => response.json())
+            .then(data => {
+                const resultsDiv = document.getElementById('results');
+
+                let html = `<p><strong>Webhook Generation Status:</strong> ${data.generate_status}</p>`;
+
+                if (data.submit_status === 200 || data.submit_status === 201) {
+                    html += `<div class="success"><p><strong>Submission Status:</strong> ${data.submit_status}</p>
+                             <p><strong>Response:</strong> ${data.submit_response}</p></div>`;
+                } else {
+                    html += `<div class="error"><p><strong>Submission Status:</strong> ${data.submit_status}</p>
+                             <p><strong>Response:</strong> ${data.submit_response}</p></div>`;
+                }
+
+                resultsDiv.innerHTML = html;
+            })
+            .catch(error => {
+                document.getElementById('results').innerHTML = `<p class="error">Error loading results: ${error}</p>`;
+            });
+    </script>
+</body>
+
+</html>

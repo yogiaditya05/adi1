@@ -1,0 +1,6 @@
+{
+    "generate_status": 200,
+    "submit_status": 401,
+    "submit_response": "{\"timestamp\":\"2026-05-24T06:00:27.821+00:00\",\"status\":401,\"error\":\"Unauthorized\",\"path\":\"/testWebhook/PYTHON\"}",
+    "sql_query": "SELECT \n    p.AMOUNT AS SALARY,\n    CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME,\n    TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS AGE,\n    d.DEPARTMENT_NAME\nFROM \n    PAYMENTS p\nJOIN \n    EMPLOYEE e ON p.EMP_ID = e.EMP_ID\nJOIN \n    DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID\nWHERE \n    DAY(p.PAYMENT_TIME) != 1\nORDER BY \n    p.AMOUNT DESC\nLIMIT 1;"
+}
